@@ -15,15 +15,23 @@ SVG_NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG_NS)
 
 def load_children(path):
+    if not os.path.exists(path):
+        return None, None
     tree = ET.parse(path)
     root = tree.getroot()
-    return [copy.deepcopy(child) for child in root]
+    children = [copy.deepcopy(child) for child in root]
+    return root, children
 
-frame_tree = ET.parse(FRAME)
-frame_root = frame_tree.getroot()
+frame_root, frame_children = load_children(FRAME)
+hour_root, hour_children = load_children(HOUR)
+minute_root, minute_children = load_children(MINUTE)
 
-hour_children  = load_children(HOUR)
-minute_children = load_children(MINUTE)
+if frame_root is None:
+    frame_root = ET.Element(f"{{{SVG_NS}}}svg", {
+        "viewBox": "0 0 1000 1000",
+        "width": "1000",
+        "height": "1000",
+    })
 
 viewBox = frame_root.attrib.get("viewBox", "0 0 1000 1000")
 width   = frame_root.attrib.get("width",  "1000")
@@ -35,23 +43,26 @@ def make_clock(h, m):
     root.set("width", width)
     root.set("height", height)
 
-    hour_angle   = h * 30 + m * 0.5
+    hour_angle = h * 30 + m * 0.5
     minute_angle = m * 6
 
-    hour_group = ET.Element(f"{{{SVG_NS}}}g", attrib={
-        "transform": f"rotate({hour_angle} 500 500)"
-    })
-    for ch in hour_children:
-        hour_group.append(copy.deepcopy(ch))
+    # Hour hand
+    if hour_children:
+        g = ET.Element(f"{{{SVG_NS}}}g", {
+            "transform": f"rotate({hour_angle} 500 500)"
+        })
+        for ch in hour_children:
+            g.append(copy.deepcopy(ch))
+        root.append(g)
 
-    minute_group = ET.Element(f"{{{SVG_NS}}}g", attrib={
-        "transform": f"rotate({minute_angle} 500 500)"
-    })
-    for ch in minute_children:
-        minute_group.append(copy.deepcopy(ch))
-
-    root.append(hour_group)
-    root.append(minute_group)
+    # Minute hand
+    if minute_children:
+        g = ET.Element(f"{{{SVG_NS}}}g", {
+            "transform": f"rotate({minute_angle} 500 500)"
+        })
+        for ch in minute_children:
+            g.append(copy.deepcopy(ch))
+        root.append(g)
 
     return ET.ElementTree(root)
 
