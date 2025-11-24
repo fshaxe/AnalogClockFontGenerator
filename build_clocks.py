@@ -3,8 +3,8 @@ import os
 from svgpathtools import svg2paths2, Path, wsvg
 
 FRAME = "frame.svg"
-HOUR = "hour_hand.svg"
-MINUTE = "minute_hand.svg"
+HOUR = "hour.svg"
+MINUTE = "minute.svg"
 
 OUTDIR = "out_svgs"
 os.makedirs(OUTDIR, exist_ok=True)
