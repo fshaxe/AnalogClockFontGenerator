@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import xml.etree.ElementTree as ET
+import math
 import os
-from svgpathtools import svg2paths2, Path, wsvg
+import copy
 
 FRAME = "frame.svg"
 HOUR = "hour.svg"
@@ -9,45 +11,54 @@ MINUTE = "minute.svg"
 OUTDIR = "out_svgs"
 os.makedirs(OUTDIR, exist_ok=True)
 
-CENTER = 500 + 500j
+SVG_NS = "http://www.w3.org/2000/svg"
+ET.register_namespace("", SVG_NS)
 
+def load_children(path):
+    tree = ET.parse(path)
+    root = tree.getroot()
+    return [copy.deepcopy(child) for child in root]
 
-def load_paths(filename):
-    if not os.path.exists(filename):
-        return []
-    paths, attrs, svgattrs = svg2paths2(filename)
-    return paths
+frame_tree = ET.parse(FRAME)
+frame_root = frame_tree.getroot()
 
+hour_children  = load_children(HOUR)
+minute_children = load_children(MINUTE)
 
-frame_paths = load_paths(FRAME)
-hour_base = load_paths(HOUR)
-minute_base = load_paths(MINUTE)
+viewBox = frame_root.attrib.get("viewBox", "0 0 1000 1000")
+width   = frame_root.attrib.get("width",  "1000")
+height  = frame_root.attrib.get("height", "1000")
 
+def make_clock(h, m):
+    root = copy.deepcopy(frame_root)
+    root.set("viewBox", viewBox)
+    root.set("width", width)
+    root.set("height", height)
 
-def rotate_paths(paths, angle_deg):
-    ang = angle_deg * 3.141592653589793 / 180
-    return [Path(*[seg.rotated(ang, CENTER) for seg in p]) for p in paths]
+    hour_angle   = h * 30 + m * 0.5
+    minute_angle = m * 6
 
+    hour_group = ET.Element(f"{{{SVG_NS}}}g", attrib={
+        "transform": f"rotate({hour_angle} 500 500)"
+    })
+    for ch in hour_children:
+        hour_group.append(copy.deepcopy(ch))
 
-for H in range(12):
-    for M in range(60):
-        outname = f"{OUTDIR}/clock_{H:02d}_{M:02d}.svg"
+    minute_group = ET.Element(f"{{{SVG_NS}}}g", attrib={
+        "transform": f"rotate({minute_angle} 500 500)"
+    })
+    for ch in minute_children:
+        minute_group.append(copy.deepcopy(ch))
 
-        svgpaths = []
+    root.append(hour_group)
+    root.append(minute_group)
 
-        # frame (no rotation)
-        svgpaths += frame_paths
+    return ET.ElementTree(root)
 
-        # hour hand
-        if hour_base:
-            hour_angle = (H % 12) * 30 + (M / 60) * 30
-            svgpaths += rotate_paths(hour_base, hour_angle)
+for h in range(12):
+    for m in range(60):
+        svg = make_clock(h, m)
+        out = f"{OUTDIR}/clock_{h:02d}_{m:02d}.svg"
+        svg.write(out, encoding="utf-8", xml_declaration=True)
 
-        # minute hand
-        if minute_base:
-            minute_angle = M * 6
-            svgpaths += rotate_paths(minute_base, minute_angle)
-
-        wsvg(svgpaths, filename=outname, svg_attributes={'viewBox': '0 0 1000 1000'})
-
-print("[done] generated 720 clock SVGs in out_svgs/")
+print("[done] 720 clocks in out_svgs/")
