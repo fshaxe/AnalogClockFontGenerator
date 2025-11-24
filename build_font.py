@@ -8,7 +8,7 @@ Input:
     out_svgs_flat/clock_HH_MM.svg   (00:00–11:59)
 
 Output:
-    SimpleAnalogClockFont.ttf
+    AnalogClockFont.ttf
 
 Codepoints:
     U+E000 => 00:00
@@ -24,7 +24,7 @@ from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import newTable
 
 SVG_DIR = "out_svgs_flat"
-OUT_FONT = "SimpleAnalogClockFont.ttf"
+OUT_FONT = "AnalogClockFont.ttf"
 
 EM = 1000
 ASCENT = 1000
@@ -115,12 +115,12 @@ def build_font():
 
     # Name table
     name = newTable("name")
-    family = "Simple Analog Clock Font"
+    family = "Analog Clock Font"
     records = {
         1: family,                         # Family
         2: "Regular",                      # Subfamily
         4: f"{family} Regular",            # Full name
-        6: "SimpleAnalogClockFont-Regular" # PostScript name
+        6: "AnalogClockFont-Regular" # PostScript name
     }
     for nid, string in records.items():
         name.setName(string, nid, 3, 1, 0x409)  # Windows, Unicode, en-US
