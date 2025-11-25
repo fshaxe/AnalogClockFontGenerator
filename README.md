@@ -27,12 +27,12 @@ cd ~/Downloads
 git clone https://github.com/fshaxe/AnalogClockFontGenerator
 cd AnalogClockFontGenerator
 
+# place your SVG components in this directory
+
 python3 -m venv .venv
 # fish shell users use: source .venv/bin/activate.fish
 source .venv/bin/activate
 pip install svgpathtools fonttools
-
-# place your SVG components in this directory
 
 python build_clocks.py
 
